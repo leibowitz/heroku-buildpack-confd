@@ -1,0 +1,38 @@
+#!/bin/sh
+# bin/compile <build-dir> <cache-dir> <env-dir>
+
+set -e
+
+indent() {
+  sed -u 's/^/       /'
+}
+
+VERSION="0.16.0"
+REPO="https://github.com/kelseyhightower/confd"
+
+DOWNLOAD_URL="${REPO}/releases/download/v${VERSION}/confd-${VERSION}-linux-amd64"
+
+
+# parse and derive params
+BUILD_DIR=$1
+CACHE_DIR=$2
+
+BUILDPACK_DIR="$(dirname $(dirname $0))"
+
+BIN_DIR="${BUILD_DIR}/vendor/bin"
+
+# Make sure the directory exists
+mkdir -p "${BIN_DIR}"
+
+echo "-----> Downloading confd"
+
+curl -s -L ${DOWNLOAD_URL} > /tmp/confd
+echo 7c903f70b19134ddbd379eef8533cfcf /tmp/confd | md5sum
+chmod +x /tmp/confd
+mv /tmp/confd "${BIN_DIR}/confd"
+
+# Add $BIN_DIR to $PATH
+mkdir -p "${BUILD_DIR}/.profile.d"
+cat > "${BUILD_DIR}/.profile.d/confd.sh" <<'PROFILE'
+export PATH="$PATH:$BIN_DIR"
+PROFILE
